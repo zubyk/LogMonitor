@@ -12,24 +12,23 @@
 
         public int ProcessorId { get; }
 
-        public ResourceProcessor(int processorId, ILogger logger)
+        protected ResourceProcessor(int processorId, ILogger logger)
         {
             ProcessorId = processorId;
-            Logger = logger;
+            Logger = logger ?? new EmptyLogger();
             NextProcessors = _nextProcessors.AsEnumerable();
         }
 
         public void AddNextProcessor(ResourceProcessor? processor)
         {
+            
             if (processor is null) throw new ArgumentNullException(nameof(processor));
 
             if (GetAllowedNextProcessorTypes().Any(t => t.IsAssignableFrom(processor.GetType())))
             {
                 _nextProcessors.Add(processor);
-                return;
             }
-
-            throw new InvalidProcessorClassException(ProcessorId, processor.GetType());
+            else throw new InvalidProcessorClassException(ProcessorId, processor.GetType());
         }
 
         public virtual void Dispose()

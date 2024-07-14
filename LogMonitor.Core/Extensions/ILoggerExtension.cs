@@ -2,35 +2,56 @@
 
 namespace LogMonitor
 {
-    public static class ILoggerExtension
+    public static partial class ILoggerExtension
     {
-        public static IDisposable? BeginScopeFromCaller(this ILogger logger, [CallerMemberName] string? method = null)
+        public static IDisposable? BeginScopeFromCaller(this ILogger logger, object? caller = null, [CallerMemberName] string? method = null)
         {
+            if (caller is string str)
+            {
+                return logger.BeginScope("{caller}.{method}", str, method);
+            }
+            else if (caller is not null)
+            {
+                return logger.BeginScope("{caller}.{method}", caller.GetType().Name, method);
+            }
+
             return logger.BeginScope(method ?? string.Empty);
         }
 
-        public static bool FilterAndLogError(this ILogger logger, Exception e, bool filterResult = true)
+        public static bool FilterAndLogError(this ILogger logger, LogLevel logLevel, Exception e, bool filterResult = true)
         {
-            logger.LogError(e, "{TryCatchErrorMessage}", e.Message);
+            logger.LogExecutionError(logLevel, e.Message, e);
             return filterResult;
         }
 
-        public static void LogMethodCall(this ILogger logger, [CallerMemberName] string? method = null, params object[] args)
+        public static bool FilterAndLogError(this ILogger logger, Exception e, bool filterResult = true)
+            => FilterAndLogError(logger, LogLevel.Error, e, filterResult);
+
+        public static void LogMethodCall(this ILogger logger, object? caller = null, [CallerMemberName] string? method = null, params object[] args)
         {
-            if (args?.Length > 0)
+            if (caller is string str)
             {
-                if (logger.IsEnabled(LogLevel.Trace))
-                {
-                    logger.Log(LogLevel.Trace, AppLogEvents.MethodCall, "Method {method} call with params ({@params})", method, args);
-                }
-                else
-                {
-                    logger.Log(LogLevel.Debug, AppLogEvents.MethodCall, "Method {method} call with params ({params})", method, args);
-                }
+                CallEvent(str);
+            }
+            else if (caller is not null)
+            {
+                CallEvent(caller.GetType().Name);
             }
             else
             {
-                logger.Log(LogLevel.Debug, AppLogEvents.MethodCall, "Method {method} call", method);
+                CallEvent(string.Empty);
+            }
+
+            void CallEvent(string callerName)
+            {
+                if (args?.Length > 0)
+                {
+                    _methodCallWithParamsEvent(logger, callerName, method, args, null);
+                }
+                else
+                {
+                    _methodCallEvent(logger, callerName, method, null);
+                }
             }
         }
     }

@@ -2,7 +2,7 @@
 {
     public abstract class ResourceProcessorFactory<TResourceProcessor> where TResourceProcessor : ResourceProcessor
     {
-        public bool HasConfig => !string.IsNullOrWhiteSpace(GetDefaultConfig());
+        public virtual bool HasConfig => false;
 
         public virtual string? GetDefaultConfig() => null;
 

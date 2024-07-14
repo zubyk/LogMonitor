@@ -51,6 +51,7 @@ builder.Services.AddDbContext<LogMonitor.Data.DataContext, LogMonitor.Data.SqlSe
 
 builder.Services.AddTransient<IClaimsTransformation, ADClaimsTransformation>();
 
+
 //builder.Services.AddSignalR().AddHubOptions<ReportHub>(options =>
 //{
 //    if (builder.Environment.IsDevelopment())
